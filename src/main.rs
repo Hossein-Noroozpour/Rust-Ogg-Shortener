@@ -2,6 +2,7 @@
 extern crate find_folder;
 extern crate piston_window;
 extern crate rand;
+extern crate vorbis;
 
 use piston_window::{EventLoop, PistonWindow, UpdateEvent, WindowSettings};
 
@@ -14,6 +15,30 @@ widget_ids! {
         button,
         file_address_text_box
     }
+}
+
+fn shorten(data: &Vec<i16>, channels: u16, rate: u64) -> Vec<i16> {
+    println!("origin size: {} ", data.len(), rate);
+    let final_size = (data.len() as u64 * 8000) / (channels as u64 * rate);
+    let step_size = rate as f64 / 8000.0;
+    let mut short = vec![0i16; final_size as usize];
+    let mut index = 0u64;
+    let mut last_step = 0u64;
+    for i in 0..final_size {
+        let mut bit = 0i64;
+        let cur_step = ((i + 1) as f64 * step_size) as u64;
+        let steps = cur_step - last_step;
+        last_step = cur_step;
+        for _ in 0..steps {
+            for _ in 0..channels {
+                bit += data[index as usize] as i64;
+                index += 1;
+            }
+        }
+        bit /= steps as i64;
+        short[i as usize] = bit as i16;
+    }
+    return short;
 }
 
 fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
@@ -63,7 +88,20 @@ fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
         .set(ids.button, ui)
         .was_clicked()
         {
-            //app.bg_color = color::rgb(rand::random(), rand::random(), rand::random())
+//            use std::io::prelude::*;
+            use std::fs::File;
+
+            let f = File::open(&app.text).unwrap();
+            let mut decoder = vorbis::Decoder::new(f).unwrap();
+            let packets = decoder.packets();
+            for p in packets {
+                match p {
+                    Ok(packet) => println!("{:?}", shorten(&packet.data, packet.channels, packet.rate).len()),
+                    _ => {}
+                }
+
+            }
+//            vorbis::vorbis_sys::
         }
 }
 
