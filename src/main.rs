@@ -3,8 +3,15 @@ extern crate find_folder;
 extern crate piston_window;
 extern crate rand;
 extern crate vorbis;
+extern crate vorbis_sys;
+extern crate vorbisenc_sys;
+extern crate libc;
 
 use piston_window::{EventLoop, PistonWindow, UpdateEvent, WindowSettings};
+
+const WIDTH: u32 = 900;
+const HEIGHT: u32 = 200;
+const LEAST_RATE: u64 = 8000;
 
 widget_ids! {
     struct Ids {
@@ -18,9 +25,8 @@ widget_ids! {
 }
 
 fn shorten(data: &Vec<i16>, channels: u16, rate: u64) -> Vec<i16> {
-    println!("origin size: {} ", data.len(), rate);
-    let final_size = (data.len() as u64 * 8000) / (channels as u64 * rate);
-    let step_size = rate as f64 / 8000.0;
+    let final_size = (data.len() as u64 * LEAST_RATE) / (channels as u64 * rate);
+    let step_size = (rate as f64) / (LEAST_RATE as f64);
     let mut short = vec![0i16; final_size as usize];
     let mut index = 0u64;
     let mut last_step = 0u64;
@@ -94,14 +100,41 @@ fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
             let f = File::open(&app.text).unwrap();
             let mut decoder = vorbis::Decoder::new(f).unwrap();
             let packets = decoder.packets();
+            let mut shortened = Vec::new();
             for p in packets {
                 match p {
-                    Ok(packet) => println!("{:?}", shorten(&packet.data, packet.channels, packet.rate).len()),
+                    Ok(packet) => {
+//                        println!("data size: {}, channels: {}, rate: {}, bitrate_upper: {}, bitrate_nominal: {}, bitrate_lower: {}, bitrate_window: {}",
+//                            packet.data.len(),
+//                            packet.channels,
+//                            packet.rate,
+//                            packet.bitrate_upper,
+//                            packet.bitrate_nominal,
+//                            packet.bitrate_lower,
+//                            packet.bitrate_window
+//                        );
+                        shortened.append(&mut shorten(&packet.data, packet.channels, packet.rate));
+                    },
                     _ => {}
                 }
 
             }
-//            vorbis::vorbis_sys::
+            println!("Shortened PCM size: {}", shortened.len());
+            let mut vorbis_info = vorbis_sys::vorbis_info{
+                version: 0,
+                channels: 1,
+                rate: LEAST_RATE as libc::c_long,
+                bitrate_upper: 0,
+                bitrate_nominal: 0,
+                bitrate_lower: 0,
+                bitrate_window: 0,
+                codec_setup: 0 as *mut libc::c_void,
+            };
+            unsafe {
+                vorbis_sys::vorbis_info_init(&mut vorbis_info);
+                vorbisenc_sys::vorbis_encode_init_vbr(&mut vorbis_info, 1, 8000, 0.1);
+                println!("Vorbis version: {:?}", *vorbis_sys::vorbis_version_string());
+            }
         }
 }
 
@@ -118,16 +151,9 @@ impl Application {
 }
 
 fn main() {
-    const WIDTH: u32 = 1100;
-    const HEIGHT: u32 = 560;
-
-    // Change this to OpenGL::V2_1 if not working.
-    let opengl = piston_window::OpenGL::V4_5;
-
     // Construct the window.
     let mut window: PistonWindow =
-    WindowSettings::new("Ogg reducer", [WIDTH, HEIGHT])
-        .opengl(opengl).exit_on_esc(true).vsync(true).build().unwrap();
+    WindowSettings::new("Ogg reducer", [WIDTH, HEIGHT]).exit_on_esc(true).vsync(true).build().unwrap();
     let mut ui = conrod::UiBuilder::new().build();
     let assets = find_folder::Search::KidsThenParents(3, 5).for_folder("assets").unwrap();
     let font_path = assets.join("fonts/NotoSans/NotoSans-Regular.ttf");
