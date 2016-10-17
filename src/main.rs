@@ -50,21 +50,20 @@ fn shorten(data: &Vec<i16>, channels: u16, rate: u64) -> Vec<i16> {
 
 
 
-    // let final_size = data.len() as u64 / channels as u64 ;
-    // let mut short = vec![0i16; final_size as usize];
-    // let mut index = 0u64;
-    // for i in 0..final_size {
-    //     let mut bit = 0i64;
-    //     for _ in 0..channels {
-    //         bit += data[index as usize] as i64;
-    //         index += 1;
-    //     }
-    //     bit /= channels as i64;
-    //     short[i as usize] = bit as i16;
-    // }
+     let final_size = data.len() as u64 / channels as u64 ;
+     let mut short = vec![0i16; final_size as usize];
+     let mut index = 0u64;
+     for i in 0..final_size {
+         let mut bit = 0i64;
+         for _ in 0..channels {
+             bit += data[index as usize] as i64;
+             index += 1;
+         }
+         bit /= channels as i64;
+         short[i as usize] = bit as i16;
+     }
 
-
-    return data.clone();
+    return short;
 }
 
 fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
@@ -114,7 +113,7 @@ fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
         .set(ids.button, ui)
         .was_clicked()
         {
-//            use std::io::prelude::*;
+            //            use std::io::prelude::*;
             use std::fs::File;
 
             let f = File::open(&app.text).unwrap();
@@ -124,23 +123,21 @@ fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
             for p in packets {
                 match p {
                     Ok(packet) => {
-                       println!("data size: {}, channels: {}, rate: {}, bitrate_upper: {}, bitrate_nominal: {}, bitrate_lower: {}, bitrate_window: {}",
-                           packet.data.len(),
-                           packet.channels,
-                           packet.rate,
-                           packet.bitrate_upper,
-                           packet.bitrate_nominal,
-                           packet.bitrate_lower,
-                           packet.bitrate_window
-                       );
-                       for s in packet.data {
-                           shortened.push(s);
-                       }
-                        // shortened.extend_from_slice(&packet.data[..]);
+//                        println!("data size: {}, channels: {}, rate: {}, bitrate_upper: {}, bitrate_nominal: {}, bitrate_lower: {}, bitrate_window: {}",
+//                                 packet.data.len(),
+//                                 packet.channels,
+//                                 packet.rate,
+//                                 packet.bitrate_upper,
+//                                 packet.bitrate_nominal,
+//                                 packet.bitrate_lower,
+//                                 packet.bitrate_window
+//                        );
+                        shortened.append(&mut shorten(&packet.data, packet.channels, packet.rate));
                     },
-                    _ => {}
+                    _ => {
+                        panic!("Unexpected behavior, it is likely a bug in vorbis.")
+                    }
                 }
-
             }
             println!("Shortened PCM size: {}", shortened.len());
             let mut encoder = vorbis::Encoder::new(2, LEAST_RATE, vorbis::VorbisQuality::Midium).expect("Unable to create encoder!");
