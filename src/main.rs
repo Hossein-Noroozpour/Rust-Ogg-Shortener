@@ -3,15 +3,15 @@ extern crate find_folder;
 extern crate piston_window;
 extern crate rand;
 extern crate vorbis;
-extern crate vorbis_sys;
-extern crate vorbisenc_sys;
 extern crate libc;
 
 use piston_window::{EventLoop, PistonWindow, UpdateEvent, WindowSettings};
 
+use std::io::Write;
+
 const WIDTH: u32 = 900;
 const HEIGHT: u32 = 200;
-const LEAST_RATE: u64 = 8000;
+const LEAST_RATE: u64 = 44100;
 
 widget_ids! {
     struct Ids {
@@ -25,26 +25,46 @@ widget_ids! {
 }
 
 fn shorten(data: &Vec<i16>, channels: u16, rate: u64) -> Vec<i16> {
-    let final_size = (data.len() as u64 * LEAST_RATE) / (channels as u64 * rate);
-    let step_size = (rate as f64) / (LEAST_RATE as f64);
-    let mut short = vec![0i16; final_size as usize];
-    let mut index = 0u64;
-    let mut last_step = 0u64;
-    for i in 0..final_size {
-        let mut bit = 0i64;
-        let cur_step = ((i + 1) as f64 * step_size) as u64;
-        let steps = cur_step - last_step;
-        last_step = cur_step;
-        for _ in 0..steps {
-            for _ in 0..channels {
-                bit += data[index as usize] as i64;
-                index += 1;
-            }
-        }
-        bit /= steps as i64;
-        short[i as usize] = bit as i16;
-    }
-    return short;
+    // let final_size = (data.len() as u64 * LEAST_RATE) / (channels as u64 * rate);
+    // let step_size = (rate as f64) / (LEAST_RATE as f64);
+    // let mut short = vec![0i16; final_size as usize];
+    // let mut index = 0u64;
+    // let mut last_step = 0u64;
+    // for i in 0..final_size {
+    //     let mut bit = 0i64;
+    //     let cur_step = ((i + 1) as f64 * step_size) as u64;
+    //     let steps = cur_step - last_step;
+    //     last_step = cur_step;
+    //     for _ in 0..steps {
+    //         for _ in 0..channels {
+    //             bit += data[index as usize] as i64;
+    //             index += 1;
+    //         }
+    //     }
+    //     bit /= steps as i64;
+    //     bit /= channels as i64;
+    //     short[i as usize] = bit as i16;
+    // }
+
+
+
+
+
+    // let final_size = data.len() as u64 / channels as u64 ;
+    // let mut short = vec![0i16; final_size as usize];
+    // let mut index = 0u64;
+    // for i in 0..final_size {
+    //     let mut bit = 0i64;
+    //     for _ in 0..channels {
+    //         bit += data[index as usize] as i64;
+    //         index += 1;
+    //     }
+    //     bit /= channels as i64;
+    //     short[i as usize] = bit as i16;
+    // }
+
+
+    return data.clone();
 }
 
 fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
@@ -104,37 +124,30 @@ fn set_widgets(ui: &mut conrod::UiCell, app: &mut Application, ids: &mut Ids) {
             for p in packets {
                 match p {
                     Ok(packet) => {
-//                        println!("data size: {}, channels: {}, rate: {}, bitrate_upper: {}, bitrate_nominal: {}, bitrate_lower: {}, bitrate_window: {}",
-//                            packet.data.len(),
-//                            packet.channels,
-//                            packet.rate,
-//                            packet.bitrate_upper,
-//                            packet.bitrate_nominal,
-//                            packet.bitrate_lower,
-//                            packet.bitrate_window
-//                        );
-                        shortened.append(&mut shorten(&packet.data, packet.channels, packet.rate));
+                       println!("data size: {}, channels: {}, rate: {}, bitrate_upper: {}, bitrate_nominal: {}, bitrate_lower: {}, bitrate_window: {}",
+                           packet.data.len(),
+                           packet.channels,
+                           packet.rate,
+                           packet.bitrate_upper,
+                           packet.bitrate_nominal,
+                           packet.bitrate_lower,
+                           packet.bitrate_window
+                       );
+                       for s in packet.data {
+                           shortened.push(s);
+                       }
+                        // shortened.extend_from_slice(&packet.data[..]);
                     },
                     _ => {}
                 }
 
             }
             println!("Shortened PCM size: {}", shortened.len());
-            let mut vorbis_info = vorbis_sys::vorbis_info{
-                version: 0,
-                channels: 1,
-                rate: LEAST_RATE as libc::c_long,
-                bitrate_upper: 0,
-                bitrate_nominal: 0,
-                bitrate_lower: 0,
-                bitrate_window: 0,
-                codec_setup: 0 as *mut libc::c_void,
-            };
-            unsafe {
-                vorbis_sys::vorbis_info_init(&mut vorbis_info);
-                vorbisenc_sys::vorbis_encode_init_vbr(&mut vorbis_info, 1, 8000, 0.1);
-                println!("Vorbis version: {:?}", *vorbis_sys::vorbis_version_string());
-            }
+            let mut encoder = vorbis::Encoder::new(2, LEAST_RATE, vorbis::VorbisQuality::Midium).expect("Unable to create encoder!");
+            let mut shortened = encoder.encode(&shortened).expect("Unable to encode to vorbis!");
+            // shortened.append(&mut encoder.flush().expect("Unable to flush!"));
+            let mut file = File::create("/home/thany/1.ogg").expect("Unable to create output file!");
+            file.write(&shortened[..]).expect("Unable to write to output file!");
         }
 }
 
@@ -155,7 +168,7 @@ fn main() {
     let mut window: PistonWindow =
     WindowSettings::new("Ogg reducer", [WIDTH, HEIGHT]).exit_on_esc(true).vsync(true).build().unwrap();
     let mut ui = conrod::UiBuilder::new().build();
-    let assets = find_folder::Search::KidsThenParents(3, 5).for_folder("assets").unwrap();
+    let assets = find_folder::Search::KidsThenParents(3, 5).for_folder("assets").expect("Couldn't found font file!");
     let font_path = assets.join("fonts/NotoSans/NotoSans-Regular.ttf");
     ui.fonts.insert_from_file(font_path).unwrap();
     let mut ids = Ids::new(ui.widget_id_generator());
