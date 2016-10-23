@@ -1,7 +1,8 @@
-extern crate rand;
+extern crate gtk;
 extern crate vorbis;
 
 use std::io::Write;
+use gtk::prelude::*;
 
 const LEAST_RATE: u64 = 8000;
 
@@ -45,10 +46,10 @@ fn rate_reducer(data: &Vec<i16>, rate: u64) -> Vec<i16> {
     return short;
 }
 
-fn main() {
+fn shortener(in_file: &str, out_file: &str) {
     use std::fs::File;
 
-    let f = File::open("/home/thany/Dropbox/Projects/Start/Music/back-1.ogg").unwrap();
+    let f = File::open(in_file).unwrap();
     let mut decoder = vorbis::Decoder::new(f).unwrap();
     let packets = decoder.packets();
     let mut shortened = Vec::new();
@@ -73,6 +74,52 @@ fn main() {
         .expect("Unable to create encoder!");
     let mut shortened = encoder.encode(&shortened).expect("Unable to encode to vorbis!");
     shortened.append(&mut encoder.flush().expect("Unable to flush!"));
-    let mut file = File::create("/home/thany/1.ogg").expect("Unable to create output file!");
+    let mut file = File::create(out_file).expect("Unable to create output file!");
     file.write(&shortened[..]).expect("Unable to write to output file!");
+}
+
+
+
+fn main() {
+    if gtk::init().is_err() {
+        panic!("Failed to initialize GTK.");
+    }
+
+    let l1 = gtk::Label::new(Some("Input file: "));
+    l1.set_halign(gtk::Align::Start);
+    let l_in_file = gtk::Label::new(Some(""));
+    l_in_file.set_halign(gtk::Align::Start);
+    let b_in = gtk::Button::new_with_label("Choose input file");
+
+    let l2 = gtk::Label::new(Some("Output file: "));
+    l2.set_halign(gtk::Align::Start);
+    let l_out_file = gtk::Label::new(Some(""));
+    l_out_file.set_halign(gtk::Align::Start);
+    let b_out = gtk::Button::new_with_label("Choose output file");
+
+    let b_run = gtk::Button::new_with_label("Shorten");
+
+    let grid = gtk::Grid::new();
+    grid.set_row_spacing(5);
+    grid.set_column_spacing(5);
+    grid.set_border_width(5);
+    grid.attach(&l1, 0, 0, 1, 1);
+    grid.attach(&l_in_file, 1, 0, 1, 1);
+    grid.attach(&b_in, 2, 0, 1, 1);
+    grid.attach(&l2, 0, 1, 1, 1);
+    grid.attach(&l_out_file, 1, 1, 1, 1);
+    grid.attach(&b_out, 2, 1, 1, 1);
+    grid.attach(&b_run, 0, 2, 3, 1);
+
+    let window = gtk::Window::new(gtk::WindowType::Toplevel);
+    window.set_title("Rust ogg shortener");
+    window.set_position(gtk::WindowPosition::Center);
+    window.add(&grid);
+    window.connect_delete_event(|_, _| {
+       gtk::main_quit();
+       Inhibit(false)
+    });
+    window.show_all();
+    window.set_resizable(false);
+    gtk::main();
 }

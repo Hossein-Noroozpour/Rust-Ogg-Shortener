@@ -4,10 +4,6 @@ version = "0.1.0"
 authors = ["Hossein Noroozpour (Thany Hulixer) <hossein.noroozpour@gmail.com>"]
 
 [dependencies]
-conrod = "*"
-piston_window = "0.52"
-find_folder = "*"
-rand = "*"
+gtk = { version = "*", features = ["v3_16"] }
 vorbis = "*"
 vorbis-sys = "*"
-libc = "*"
