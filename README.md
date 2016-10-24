@@ -1,4 +1,4 @@
-# OGG-Shortener
+# Vorbis-Shortener
 
 This application is a good program to help audio content providers to have a
 good enough resolution audio files. This is applicable for game projects, web
@@ -15,9 +15,9 @@ You have two options:
  - Clone this project and build it by cargo
 
     ```
-    git clone https://github.com/Hossein-Noroozpour/Rust-Ogg-Shortener
+    git clone https://github.com/Hossein-Noroozpour/vorbis-shortener-rs
 
-    cd Rust-Ogg-Shortener
+    cd vorbis-shortener-rs
 
     cargo run
     ```

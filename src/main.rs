@@ -118,7 +118,7 @@ fn main() {
     grid.attach(&b_run, 0, 2, 3, 1);
 
     let window = gtk::Window::new(gtk::WindowType::Toplevel);
-    window.set_title("Rust ogg shortener");
+    window.set_title("Rust vorbis shortener");
     window.set_position(gtk::WindowPosition::Center);
     window.add(&grid);
     window.connect_delete_event(|_, _| {
