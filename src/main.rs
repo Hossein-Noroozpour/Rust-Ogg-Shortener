@@ -81,6 +81,12 @@ fn shortener(in_file: &str, out_file: &str) {
 
 
 fn main() {
+    struct AppData {
+        l_in_file: gtk::Label,
+        l_out_file: gtk::Label,
+        window: gtk::Window,
+    }
+
     if gtk::init().is_err() {
         panic!("Failed to initialize GTK.");
     }
@@ -119,7 +125,111 @@ fn main() {
        gtk::main_quit();
        Inhibit(false)
     });
-    window.show_all();
     window.set_resizable(false);
+    window.show_all();
+
+    let data = std::sync::Arc::new(std::sync::RwLock::new(AppData{
+        l_in_file: l_in_file,
+        l_out_file: l_out_file,
+        window: window
+    }));
+
+    let b_in_data = data.clone();
+    b_in.connect_clicked(move |_| {
+        let data = b_in_data.write().unwrap();
+        let dialog = gtk::FileChooserDialog::new(
+            Some("Choose a ogg file"), Some(&data.window), gtk::FileChooserAction::Open);
+        dialog.add_buttons(&[
+            ("Open", gtk::ResponseType::Ok.into()),
+            ("Cancel", gtk::ResponseType::Cancel.into())
+        ]);
+        let filter = gtk::FileFilter::new();
+        filter.add_pattern("*.ogg");
+
+        dialog.set_filter(&filter);
+
+        dialog.set_select_multiple(false);
+        if dialog.run() == gtk::ResponseType::Ok.into() {
+            data.l_in_file.set_text(
+                dialog.get_filename().expect("Unexpected behavior!")
+                .to_str().expect("Unexpected behavior!"));
+        }
+        dialog.destroy();
+    });
+
+    let b_out_data = data.clone();
+    b_out.connect_clicked(move |_| {
+        let data = b_out_data.write().unwrap();
+        let dialog = gtk::FileChooserDialog::new(
+            Some("Create a ogg file"), Some(&data.window), gtk::FileChooserAction::Save);
+        dialog.add_buttons(&[
+            ("Save", gtk::ResponseType::Ok.into()),
+            ("Cancel", gtk::ResponseType::Cancel.into())
+        ]);
+        let filter = gtk::FileFilter::new();
+        filter.add_pattern("*.ogg");
+
+        dialog.set_filter(&filter);
+
+        dialog.set_select_multiple(false);
+        if dialog.run() == gtk::ResponseType::Ok.into() {
+            data.l_out_file.set_text(
+                dialog.get_filename().expect("Unexpected behavior!")
+                .to_str().expect("Unexpected behavior!"));
+        }
+        dialog.destroy();
+    });
+
+    b_run.connect_clicked(move |_| {
+        let data = data.read().unwrap();
+        let in_file = data.l_in_file.get_text().expect("Unexpected behavior");
+        let out_file = data.l_out_file.get_text().expect("Unexpected behavior");
+        if in_file.len() == 0 {
+            let dialog = gtk::MessageDialog::new(
+                Some(&data.window),
+                gtk::DIALOG_MODAL,
+                gtk::MessageType::Error,
+                gtk::ButtonsType::Close,
+                "Please specify an OGG input file!");
+            dialog.run();
+            dialog.destroy();
+            return;
+        }
+        if out_file.len() == 0 {
+            let dialog = gtk::MessageDialog::new(
+                Some(&data.window),
+                gtk::DIALOG_MODAL,
+                gtk::MessageType::Error,
+                gtk::ButtonsType::Close,
+                "Please specify an OGG output file!");
+            dialog.run();
+            dialog.destroy();
+            return;
+        }
+        if !in_file.ends_with(".ogg") {
+            let dialog = gtk::MessageDialog::new(
+                Some(&data.window),
+                gtk::DIALOG_MODAL,
+                gtk::MessageType::Error,
+                gtk::ButtonsType::Close,
+                "Please specify an OGG formated file for input file!");
+            dialog.run();
+            dialog.destroy();
+            return;
+        }
+        if !out_file.ends_with(".ogg") {
+            let dialog = gtk::MessageDialog::new(
+                Some(&data.window),
+                gtk::DIALOG_MODAL,
+                gtk::MessageType::Error,
+                gtk::ButtonsType::Close,
+                "Please specify an OGG formated file for output file!");
+            dialog.run();
+            dialog.destroy();
+            return;
+        }
+        shortener(&in_file, &out_file);
+    });
+
     gtk::main();
 }
