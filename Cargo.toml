@@ -5,6 +5,7 @@ authors = ["Hossein Noroozpour (Thany Hulixer) <hossein.noroozpour@gmail.com>"]
 repository = "https://github.com/Hossein-Noroozpour/Rust-Ogg-Shortener"
 description = "This a very useful tool for video games. Most of the audios in games do not need a high quality multichanneled form. This tool help you to reduce it as much as possible."
 documentation = "https://github.com/Hossein-Noroozpour/Rust-Ogg-Shortener"
+license = "MIT"
 
 [dependencies]
 gtk = { version = "*", features = ["v3_16"] }
