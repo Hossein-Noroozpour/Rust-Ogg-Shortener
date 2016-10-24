@@ -8,4 +8,4 @@ and etc.
 License
 =
 You can do whatever you want to do with it, but please make some credit for me,
-because I'm currently looking for a job and I,m seeking for credit.
+because I'm currently looking for a job and I'm seeking for credit.
