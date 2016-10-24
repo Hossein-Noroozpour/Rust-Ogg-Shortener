@@ -1,12 +1,12 @@
 # OGG-Shortener
 
-This application is a good program to help audio content providers, have a good
-enough resolution audio files. This is applicable for game projects, web audio
-and etc.
+This application is a good program to help audio content providers to have a
+good enough resolution audio files. This is applicable for game projects, web
+audios and etc.
 
 ## Installation
 
-you have two option:
+You have two options:
  - You can install it by cargo:
 
     ```
@@ -16,7 +16,7 @@ you have two option:
 
     ```
     git clone https://github.com/Hossein-Noroozpour/Rust-Ogg-Shortener
-    
+
     cd Rust-Ogg-Shortener
 
     cargo run
