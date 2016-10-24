@@ -8,6 +8,5 @@ documentation = "https://github.com/Hossein-Noroozpour/Rust-Ogg-Shortener"
 license = "MIT"
 
 [dependencies]
-gtk = { version = "*", features = ["v3_16"] }
-vorbis = "*"
-vorbis-sys = "*"
+gtk = { version = "0.1", features = ["v3_16"] }
+vorbis = "0.1"
