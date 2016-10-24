@@ -8,13 +8,17 @@ and etc.
 
 you have two option:
  - You can install it by cargo:
+
     ```
     cargo install vorbis-shortener
     ```
  - Clone this project and build it by cargo
+
     ```
     git clone https://github.com/Hossein-Noroozpour/Rust-Ogg-Shortener
+    
     cd Rust-Ogg-Shortener
+
     cargo run
     ```
 
