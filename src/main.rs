@@ -187,7 +187,7 @@ fn main() {
         if in_file.len() == 0 {
             let dialog = gtk::MessageDialog::new(
                 Some(&data.window),
-                gtk::DIALOG_MODAL,
+                gtk::DialogFlags::MODAL,
                 gtk::MessageType::Error,
                 gtk::ButtonsType::Close,
                 "Please specify an OGG input file!");
@@ -198,7 +198,7 @@ fn main() {
         if out_file.len() == 0 {
             let dialog = gtk::MessageDialog::new(
                 Some(&data.window),
-                gtk::DIALOG_MODAL,
+                gtk::DialogFlags::MODAL,
                 gtk::MessageType::Error,
                 gtk::ButtonsType::Close,
                 "Please specify an OGG output file!");
@@ -209,7 +209,7 @@ fn main() {
         if !in_file.ends_with(".ogg") {
             let dialog = gtk::MessageDialog::new(
                 Some(&data.window),
-                gtk::DIALOG_MODAL,
+                gtk::DialogFlags::MODAL,
                 gtk::MessageType::Error,
                 gtk::ButtonsType::Close,
                 "Please specify an OGG formated file for input file!");
@@ -220,7 +220,7 @@ fn main() {
         if !out_file.ends_with(".ogg") {
             let dialog = gtk::MessageDialog::new(
                 Some(&data.window),
-                gtk::DIALOG_MODAL,
+                gtk::DialogFlags::MODAL,
                 gtk::MessageType::Error,
                 gtk::ButtonsType::Close,
                 "Please specify an OGG formated file for output file!");

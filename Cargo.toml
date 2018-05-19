@@ -8,5 +8,5 @@ documentation = "https://github.com/Hossein-Noroozpour/vorbis-shortener-rs"
 license = "MIT"
 
 [dependencies]
-gtk = { version = "0.1", features = ["v3_16"] }
+gtk = { version = "0.4.1", features = ["v3_16"] }
 vorbis = "0.1"
